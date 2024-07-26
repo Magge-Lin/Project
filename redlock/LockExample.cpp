@@ -16,12 +16,14 @@ g++ -o bin/CLockExample bin/CLockExample.o bin/sds.o bin/redlock.o -L./bin -lred
 */
 int main (int argc, char **argv) {
     CRedLock * dlm = new CRedLock();
-    dlm->AddServerUrl("127.0.0.1", 6379);
+    dlm->AddServerUrl("127.0.0.1", 5005, "123456");
+    dlm->AddServerUrl("127.0.0.1", 5006, "123456");
+    dlm->AddServerUrl("127.0.0.1", 5007, "123456");
     
     // 分布式锁的使用案例
     while (1) {
         CLock my_lock;
-        bool flag = dlm->Lock("foo", 100000, my_lock);
+        bool flag = dlm->Lock("cmd:trainId-Route", 1000, my_lock);
         if (flag) {
             printf("获取成功, Acquired by client name:%s, res:%s, vttl:%d\n",
                    my_lock.m_val, my_lock.m_resource, my_lock.m_validityTime);
@@ -30,14 +32,11 @@ int main (int argc, char **argv) {
             {
                 if (rand() % 3 != 0)
                 {
-                    throw std::runtime_error("发生了一个错误");
+                    throw std::runtime_error("抛出异常.");
                 }
                 
-                sleep(80);
+                sleep(2);
                 dlm->Unlock(my_lock);
-                // do other job
-                // sleep(2);
-                /* code */
             }
             catch(const std::exception& e)
             {

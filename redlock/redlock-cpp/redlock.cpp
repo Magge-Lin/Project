@@ -102,14 +102,38 @@ bool CRedLock::Initialize() {
 // ----------------
 // add redis server
 // ----------------
-bool CRedLock::AddServerUrl(const char *ip, const int port) {
+bool CRedLock::AddServerUrl(const char *ip, const int port, const char *password) {
     redisContext *c = NULL;
     struct timeval timeout = { 1, 500000 }; // 1.5 seconds
     c = redisConnectWithTimeout(ip, port, timeout);	
-    if (c) {
-        m_redisServer.push_back(c);
+    if (c == NULL || c->err) {
+        if (c) {
+            fprintf(stderr, "Connection error: %s, IP: %s, port: %d \n", c->errstr, ip, port);
+        } else {
+            fprintf(stderr, "Connection error: can't allocate redis context, IP: %s, port: %d \n", ip, port);
+        }
+        return false;
     }
-    m_quoRum = (int)m_redisServer.size() / 2 + 1;
+    // 执行 AUTH 命令来提供密码
+    redisReply* reply = (redisReply *)redisCommand(c, "AUTH %s", password);
+    if (reply == NULL) {
+        fprintf(stderr, "Error during AUTH: %s\n", c->errstr);
+        redisFree(c);
+        return false;
+    }
+
+    // 检查认证是否成功
+    if (reply->type == REDIS_REPLY_STATUS && strcmp(reply->str, "OK") == 0) {
+        if (c) {
+            m_redisServer.push_back(c);
+        }
+        m_quoRum = (int)m_redisServer.size() / 2 + 1;
+        printf("Authentication successful. port:%d\n", port);
+    } else {
+        printf("Authentication failed. port:%d\n", port);
+        return false;
+    }
+    
     return true;
 }
 
