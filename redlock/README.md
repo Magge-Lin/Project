@@ -25,6 +25,12 @@
 
   ```
   # redlock-cpp
+  bool flag = dlm->Lock("foo", 100000, my_lock);
+  bool flag = dlm->ContinueLock("foo", 14000, my_lock);
+  
+  这里 Lock()、ContinueLock()  两个添加分布式锁的函数，区别在于：
+    同一个进程调用 Lock() 后，需要调用 Unlock() 先解锁才能再次加锁.
+    而调用 ContinueLock() 后，同一个进程只需要再次调用 ContinueLock() 给当前进程的分布式锁续时间.
   ```
 
   
