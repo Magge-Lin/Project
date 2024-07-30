@@ -16,9 +16,18 @@ g++ -o bin/CLockExample bin/CLockExample.o bin/sds.o bin/redlock.o -L./bin -lred
 */
 int main (int argc, char **argv) {
     CRedLock * dlm = new CRedLock();
-    dlm->AddServerUrl("127.0.0.1", 5005, "123456");
-    dlm->AddServerUrl("127.0.0.1", 5006, "123456");
-    dlm->AddServerUrl("127.0.0.1", 5007, "123456");
+    bool connect = false;
+    while (!connect)
+    {
+        connect |= dlm->AddServerUrl("127.0.0.1", 5005, "123456");
+        connect |= dlm->AddServerUrl("127.0.0.1", 5006, "123456");
+        connect |= dlm->AddServerUrl("127.0.0.1", 5007, "123456");
+        if (!connect)
+        {
+            // 如果连接失败则1s试一次
+            sleep(1);
+        }
+    } 
     
     // 分布式锁的使用案例
     while (1) {

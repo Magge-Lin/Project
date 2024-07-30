@@ -149,6 +149,12 @@ void CRedLock::SetRetry(const int count, const int delay) {
 // lock the resource
 // ----------------
 bool CRedLock::Lock(const char *resource, const int ttl, CLock &lock) {
+    if (m_redisServer.empty() )
+    {
+        fprintf(stderr, "Connection error.\n");
+        return false;
+    }
+    
     sds val = GetUniqueLockId();
     if (!val) {
         return false;
